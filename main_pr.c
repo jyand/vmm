@@ -3,6 +3,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define NUM_FRAMES 32
+
 #define NUM_BYTES 256
 #define PAGE_SIZE NUM_BYTES
 #define FRAME_SIZE NUM_BYTES
@@ -12,7 +14,7 @@ struct PageFrame {
         int framenum ;
 } ;
 
-struct PageFrame TLBuffer[16] ;
+struct PageFrame TLBuffer[NUM_FRAMES] ;
 struct PageFrame PageTable[256] ;
 
 long PhysicalMem[FRAME_SIZE][NUM_BYTES] ;
@@ -80,13 +82,13 @@ void ReadBackingStore(int pagenum) {
 }
 
 void TLBInsert(int pagenum, int framenum) {
-        if (tlb_index < 16) {
+        if (tlb_index < NUM_FRAMES) {
                 TLBuffer[tlb_index].pagenum = pagenum ;
                 TLBuffer[tlb_index].framenum = framenum ;
                 tlb_index++ ;
         } else {
                 int k ;
-                for (k = 0 ; k < 15 ; ++k) {
+                for (k = 0 ; k < NUM_FRAMES - 1 ; ++k) {
                         TLBuffer[k] = TLBuffer[k+1] ;
                 }
                 TLBuffer[k].pagenum = pagenum ;
@@ -132,10 +134,16 @@ int main(int argc, char **argv) {
                 return -1 ;
         } else {
                 long *la = GetLogicalAddr(filename) ;
-                for (int k = 0 ; k < FileSize(filename) ; ++k) {
+                int k ;
+                for (k = 0 ; k < FileSize(filename) ; ++k) {
                         long temp = TranslatePhysicalAddr(la[k]) ;
-                        printf("%d\n", temp) ;
+                        //printf("%d\n", temp) ;
                 }
+                printf("# of Frames: %d\n", NUM_FRAMES) ;
+                printf("# of Page Faults: %d\n", page_fault_count) ;
+                printf("Page Fault Rate: %.3f\n", (double)page_fault_count/(double)k) ;
+                printf("# of TLB hits: %d\n", tlb_hit_count) ;
+                printf("TLB Hit Rate: %.3f\n", (double)tlb_hit_count/(double)k) ;
                 free(la) ;
         }
         return 0 ;
