@@ -3,7 +3,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define NUM_FRAMES 32
+#define NUM_FRAMES 16
 
 #define NUM_BYTES 256
 #define PAGE_SIZE NUM_BYTES

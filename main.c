@@ -3,7 +3,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define NUM_FRAMES 32
+#define NUM_FRAMES 16
 
 #define NUM_BYTES 256
 #define PAGE_SIZE NUM_BYTES
@@ -165,14 +165,14 @@ long TranslatePhysicalAddr(long log_addr) {
             }
         }
     }
-        if (frame == -1) {
-            ReadBackingStore(page) ;
-            page_fault_count++ ;
-            frame = frame_index - 1 ;
+    if (frame == -1) {
+        ReadBackingStore(page) ;
+        page_fault_count++ ;
+        frame = frame_index - 1 ;
             /*PageTable[pgtbl_index].pagenum = page ;
             PageTable[pgtbl_index].framenum = frame_index - 1 ;
             pgtbl_index++ ;*/
-        }
+    }
         TLBInsert(page, frame) ;
     long phys_addr = PAGE_SIZE*frame + offset ;
     return phys_addr ;
