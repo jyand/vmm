@@ -135,6 +135,8 @@ void GetPage(long log_addr) {
                                 break ;
                         }
                 }
+        }
+        if (frame == -1) {
                 ReadBackingStore(page) ;
                 page_fault_count++ ;
                 frame = frame_index - 1 ;
@@ -162,16 +164,16 @@ long TranslatePhysicalAddr(long log_addr) {
                 break ;
             }
         }
+    }
         if (frame == -1) {
             ReadBackingStore(page) ;
             page_fault_count++ ;
             frame = frame_index - 1 ;
-            PageTable[pgtbl_index].pagenum = page ;
+            /*PageTable[pgtbl_index].pagenum = page ;
             PageTable[pgtbl_index].framenum = frame_index - 1 ;
-            pgtbl_index++ ;
+            pgtbl_index++ ;*/
         }
         TLBInsert(page, frame) ;
-    }
     long phys_addr = PAGE_SIZE*frame + offset ;
     return phys_addr ;
 }
