@@ -7,7 +7,7 @@
 
 #define NUM_BYTES 256
 #define PAGE_SIZE NUM_BYTES
-#define FRAME_SIZE NUM_BYTES
+#define FRAME_SIZE 128
 
 struct PageFrame {
         int pagenum ;
