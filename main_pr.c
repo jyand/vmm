@@ -80,65 +80,18 @@ void ReadBackingStore(int pagenum) {
 }
 
 void TLBInsert(int pagenum, int framenum) {
-        int count ;
-        for (count = 0 ; count < tlb_index ; ++count) {
-                if (TLBuffer[count].pagenum == pagenum) {
-                        break ;
-                }
-        }
-        if (count == tlb_index) {
-                if (tlb_index < 16) {
-                        TLBuffer[tlb_index].pagenum = pagenum ;
-                        TLBuffer[tlb_index].framenum = framenum ;
-                } else {
-                        for (int k = 0 ; k < 15 ; ++k) {
-                                TLBuffer[k] = TLBuffer[k+1] ;
-                        }
-                        TLBuffer[15].pagenum = pagenum ;
-                        TLBuffer[15].framenum = framenum ;
-                }
+        if (tlb_index < 16) {
+                TLBuffer[tlb_index].pagenum = pagenum ;
+                TLBuffer[tlb_index].framenum = framenum ;
+                tlb_index++ ;
         } else {
-                for (int k = 0 ; k < 15 ; ++k) {
+                int k ;
+                for (k = 0 ; k < 15 ; ++k) {
                         TLBuffer[k] = TLBuffer[k+1] ;
                 }
-                if (tlb_index < 16) {
-                        TLBuffer[tlb_index].pagenum = pagenum ;
-                        TLBuffer[tlb_index].framenum = framenum ;
-                } else {
-                        TLBuffer[tlb_index-1].pagenum = pagenum ;
-                        TLBuffer[tlb_index-1].framenum = framenum ;
-                }
+                TLBuffer[k].pagenum = pagenum ;
+                TLBuffer[k].framenum = framenum ;
         }
-        if (tlb_index < 16) {
-                tlb_index++ ;
-        }
-}
-
-void GetPage(long log_addr) {
-        unsigned char page = (log_addr >> 8) & 0xFF ;
-        unsigned char offset = log_addr & 0xFF ;
-        int frame = -1 ;
-        for (int k = 0 ; k < tlb_index ; ++k) {
-                if (TLBuffer[k].pagenum == page) {
-                        frame = TLBuffer[k].framenum ;
-                        tlb_hit_count++ ;
-                        break ;
-                }
-        }
-        if (frame == -1) {
-                for (int k = 0 ; k < pgtbl_index ; ++k) {
-                        if (PageTable[k].pagenum == page) {
-                                frame = PageTable[k].framenum ;
-                                break ;
-                        }
-                }
-                ReadBackingStore(page) ;
-                page_fault_count++ ;
-                frame = frame_index - 1 ;
-        }
-        TLBInsert(page, frame) ;
-        printf("%d\n", log_addr) ;
-        printf("%d\n", PAGE_SIZE*frame + offset) ;
 }
 
 long TranslatePhysicalAddr(long log_addr) {

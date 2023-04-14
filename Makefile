@@ -1,7 +1,9 @@
 CC ?= gcc
+X = main
 all:
-	$(CC) -o main main.c
+	$(CC) -o $(X) $(X).c
+	$(CC) -o $(X)_pr $(X)_pr.c
 debug:
-	./main
+	./$(X) addresses.txt
 clean:
-	rm -v main
+	rm -v $(X)_pr $(X)
