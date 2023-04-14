@@ -140,6 +140,42 @@ void GetPage(long log_addr) {
         printf("%d\n", PAGE_SIZE*frame + offset) ;
 }
 
+/*
+--- Function to translate from logical to physical ---
+
+long TranslatePhysicalAddr(long log_addr) {
+    unsigned char page = (log_addr >> 8) & 0xFF ;
+    unsigned char offset = log_addr & 0xFF ;
+    int frame = -1 ;
+    for (int k = 0 ; k < tlb_index ; ++k) {
+        if (TLBuffer[k].pagenum == page) {
+            frame = TLBuffer[k].framenum ;
+            tlb_hit_count++ ;
+            break ;
+        }
+    }
+    if (frame == -1) {
+        for (int k = 0 ; k < pgtbl_index ; ++k) {
+            if (PageTable[k].pagenum == page) {
+                frame = PageTable[k].framenum ;
+                break ;
+            }
+        }
+        if (frame == -1) {
+            ReadBackingStore(page) ;
+            page_fault_count++ ;
+            frame = frame_index - 1 ;
+            PageTable[pgtbl_index].pagenum = page ;
+            PageTable[pgtbl_index].framenum = frame_index - 1 ;
+            pgtbl_index++ ;
+        }
+        TLBInsert(page, frame) ;
+    }
+    long phys_addr = PAGE_SIZE*frame + offset ;
+    return phys_addr ;
+}
+*/
+
 int main(int argc, char **argv) {
         const char* filename = argv[1] ;
         if (argv[1] == NULL) {
