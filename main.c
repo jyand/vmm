@@ -141,9 +141,6 @@ void GetPage(long log_addr) {
         printf("%d\n", PAGE_SIZE*frame + offset) ;
 }
 
-/*
---- Function to translate from logical to physical ---
-
 long TranslatePhysicalAddr(long log_addr) {
     unsigned char page = (log_addr >> 8) & 0xFF ;
     unsigned char offset = log_addr & 0xFF ;
@@ -175,7 +172,6 @@ long TranslatePhysicalAddr(long log_addr) {
     long phys_addr = PAGE_SIZE*frame + offset ;
     return phys_addr ;
 }
-*/
 
 int main(int argc, char **argv) {
         const char* filename = argv[1] ;
@@ -184,8 +180,8 @@ int main(int argc, char **argv) {
         } else {
                 long *la = GetLogicalAddr(filename) ;
                 for (int k = 0 ; k < FileSize(filename) ; ++k) {
-                        //printf("%d\n", la[k]) ;
-                        GetPage(*la) ;
+                        long temp = TranslatePhysicalAddr(La[k]) ;
+                        printf("%d\n", temp) ;
                 }
                 free(la) ;
         }
