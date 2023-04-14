@@ -57,21 +57,22 @@ void ReadBackingStore(int pagenum) {
         fclose(f) ;
         if (frame_index < FRAME_SIZE) {
                 for (int k = 0 ; k < NUM_BYTES ; ++k) {
-                        // physical memory
+                        PhysicalMem[frame_index][k] = buffer[k] ;
                 }
                 PageTable[pgtbl_index].pagenum = pagenum ;
                 PageTable[pgtbl_index].framenum = frame_index ;
                 frame_index++ ;
                 pgtbl_index ++ ;
         } else {
-                for (int k = 0 ; k < FRAME_SIZE ; ++k) {
+                int k ;
+                for (k = 0 ; k < FRAME_SIZE - 1 ; ++k) {
                         for (int j = 0 ; j < NUM_BYTES ; ++j) {
-                                // physical memory something...
+                                PhysicalMem[k][j] = PhysicalMem[k+1][j] ;
                         }
                         PageTable[k] = PageTable[k+1] ;
                 }
-                for (int k = 0 ; k < NUM_BYTES ; ++k) {
-                        // phys mem blah blah
+                for (int j = 0 ; j < NUM_BYTES ; ++j) {
+                        PhysicalMem[k][j] = buffer[j] ; 
                 }
                 PageTable[k].pagenum = pagenum ;
                 PageTable[k].framenum = frame_index - 1 ;
@@ -183,7 +184,8 @@ int main(int argc, char **argv) {
         } else {
                 long *la = GetLogicalAddr(filename) ;
                 for (int k = 0 ; k < FileSize(filename) ; ++k) {
-                        printf("%d\n", la[k]) ;
+                        //printf("%d\n", la[k]) ;
+                        GetPage(*la) ;
                 }
                 free(la) ;
         }
