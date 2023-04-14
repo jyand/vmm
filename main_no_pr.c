@@ -4,8 +4,8 @@
 #include <stdbool.h>
 
 const int PHYS_MEM_SIZE = 256;
-const int BUFFER_SIZE = PHYS_MEM_SIZE;
 const int PAGE_SIZE = PHYS_MEM_SIZE;
+const int BUFFER_SIZE = PHYS_MEM_SIZE;
 const int TLB_SIZE = 16;
 
 int printIndex;
