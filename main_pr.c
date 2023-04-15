@@ -14,10 +14,11 @@ struct PageFrame {
         int framenum ;
 } ;
 
+
 struct PageFrame TLBuffer[TLB_SIZE] ;
 struct PageFrame PageTable[256] ;
 
-long PhysicalMem[NUM_FRAMES][NUM_BYTES] ;
+long PhysicalMem[NUM_BYTES][NUM_BYTES] ;
 
 int frame_index = 0 ;
 int tlb_index = 0 ;
@@ -82,18 +83,67 @@ void ReadBackingStore(int pagenum) {
 }
 
 void TLBInsert(int pagenum, int framenum) {
-        if (tlb_index < TLB_SIZE) {
-                TLBuffer[tlb_index].pagenum = pagenum ;
-                TLBuffer[tlb_index].framenum = framenum ;
-                tlb_index++ ;
+        int count ;
+        for (count = 0 ; count < tlb_index ; ++count) {
+                if (TLBuffer[count].pagenum == pagenum) {
+                        break ;
+                }
+        }
+        if (count == tlb_index) {
+                if (tlb_index < TLB_SIZE) {
+                        TLBuffer[tlb_index].pagenum = pagenum ;
+                        TLBuffer[tlb_index].framenum = framenum ;
+                } else {
+                        for (int k = 0 ; k < TLB_SIZE - 1 ; ++k) {
+                                TLBuffer[k] = TLBuffer[k+1] ;
+                        }
+                        TLBuffer[TLB_SIZE-1].pagenum = pagenum ;
+                        TLBuffer[TLB_SIZE-1].framenum = framenum ;
+                }
         } else {
-                int k ;
-                for (k = 0 ; k < TLB_SIZE - 1 ; ++k) {
+                for (int k = 0 ; k < TLB_SIZE - 1 ; ++k) {
                         TLBuffer[k] = TLBuffer[k+1] ;
                 }
-                TLBuffer[k].pagenum = pagenum ;
-                TLBuffer[k].framenum = framenum ;
+                if (tlb_index < TLB_SIZE) {
+                        TLBuffer[tlb_index].pagenum = pagenum ;
+                        TLBuffer[tlb_index].framenum = framenum ;
+                } else {
+                        TLBuffer[tlb_index-1].pagenum = pagenum ;
+                        TLBuffer[tlb_index-1].framenum = framenum ;
+                }
         }
+        if (tlb_index < TLB_SIZE) {
+                tlb_index++ ;
+        }
+}
+
+void GetPage(long log_addr) {
+        unsigned char page = (log_addr >> 8) & 0xFF ;
+        unsigned char offset = log_addr & 0xFF ;
+        int frame = -1 ;
+        for (int k = 0 ; k < tlb_index ; ++k) {
+                if (TLBuffer[k].pagenum == page) {
+                        frame = TLBuffer[k].framenum ;
+                        tlb_hit_count++ ;
+                        break ;
+                }
+        }
+        if (frame == -1) {
+                for (int k = 0 ; k < pgtbl_index ; ++k) {
+                        if (PageTable[k].pagenum == page) {
+                                frame = PageTable[k].framenum ;
+                                break ;
+                        }
+                }
+        }
+        if (frame == -1) {
+                ReadBackingStore(page) ;
+                page_fault_count++ ;
+                frame = frame_index - 1 ;
+        }
+        TLBInsert(page, frame) ;
+        printf("%d\n", log_addr) ;
+        printf("%d\n", PAGE_SIZE*frame + offset) ;
 }
 
 long TranslatePhysicalAddr(long log_addr) {
@@ -114,16 +164,16 @@ long TranslatePhysicalAddr(long log_addr) {
                 break ;
             }
         }
-        if (frame == -1) {
-            ReadBackingStore(page) ;
-            page_fault_count++ ;
-            frame = frame_index - 1 ;
-            PageTable[pgtbl_index].pagenum = page ;
-            PageTable[pgtbl_index].framenum = frame_index - 1 ;
-            pgtbl_index++ ;
-        }
-        TLBInsert(page, frame) ;
     }
+    if (frame == -1) {
+        ReadBackingStore(page) ;
+        page_fault_count++ ;
+        frame = frame_index - 1 ;
+            /*PageTable[pgtbl_index].pagenum = page ;
+            PageTable[pgtbl_index].framenum = frame_index - 1 ;
+            pgtbl_index++ ;*/
+    }
+        TLBInsert(page, frame) ;
     long phys_addr = PAGE_SIZE*frame + offset ;
     return phys_addr ;
 }
@@ -139,7 +189,7 @@ int main(int argc, char **argv) {
                         long temp = TranslatePhysicalAddr(la[k]) ;
                         //printf("%d\n", temp) ;
                 }
-                printf("# of Frames: %d\n", TLB_SIZE) ;
+                printf("# of Frames: %d\n", NUM_FRAMES) ;
                 printf("# of Page Faults: %d\n", page_fault_count) ;
                 printf("Page Fault Rate: %.3f\n", (double)page_fault_count/(double)k) ;
                 printf("# of TLB hits: %d\n", tlb_hit_count) ;
