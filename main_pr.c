@@ -3,21 +3,21 @@
 #include <time.h>
 #include <unistd.h>
 
-#define NUM_FRAMES 16
+#define NUM_FRAMES 128
 
+#define TLB_SIZE 16
 #define NUM_BYTES 256
 #define PAGE_SIZE NUM_BYTES
-#define FRAME_SIZE 128
 
 struct PageFrame {
         int pagenum ;
         int framenum ;
 } ;
 
-struct PageFrame TLBuffer[NUM_FRAMES] ;
+struct PageFrame TLBuffer[TLB_SIZE] ;
 struct PageFrame PageTable[256] ;
 
-long PhysicalMem[FRAME_SIZE][NUM_BYTES] ;
+long PhysicalMem[NUM_FRAMES][NUM_BYTES] ;
 
 int frame_index = 0 ;
 int tlb_index = 0 ;
@@ -57,7 +57,7 @@ void ReadBackingStore(int pagenum) {
         fseek(f, NUM_BYTES*pagenum, SEEK_SET) ;
         fread(buffer, sizeof(char), NUM_BYTES, f) ;
         fclose(f) ;
-        if (frame_index < FRAME_SIZE) {
+        if (frame_index < NUM_FRAMES) {
                 for (int k = 0 ; k < NUM_BYTES ; ++k) {
                         PhysicalMem[frame_index][k] = buffer[k] ;
                 }
@@ -67,7 +67,7 @@ void ReadBackingStore(int pagenum) {
                 pgtbl_index ++ ;
         } else {
                 int k ;
-                for (k = 0 ; k < FRAME_SIZE - 1 ; ++k) {
+                for (k = 0 ; k < NUM_FRAMES - 1 ; ++k) {
                         for (int j = 0 ; j < NUM_BYTES ; ++j) {
                                 PhysicalMem[k][j] = PhysicalMem[k+1][j] ;
                         }
@@ -82,13 +82,13 @@ void ReadBackingStore(int pagenum) {
 }
 
 void TLBInsert(int pagenum, int framenum) {
-        if (tlb_index < NUM_FRAMES) {
+        if (tlb_index < TLB_SIZE) {
                 TLBuffer[tlb_index].pagenum = pagenum ;
                 TLBuffer[tlb_index].framenum = framenum ;
                 tlb_index++ ;
         } else {
                 int k ;
-                for (k = 0 ; k < NUM_FRAMES - 1 ; ++k) {
+                for (k = 0 ; k < TLB_SIZE - 1 ; ++k) {
                         TLBuffer[k] = TLBuffer[k+1] ;
                 }
                 TLBuffer[k].pagenum = pagenum ;
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
                         long temp = TranslatePhysicalAddr(la[k]) ;
                         //printf("%d\n", temp) ;
                 }
-                printf("# of Frames: %d\n", NUM_FRAMES) ;
+                printf("# of Frames: %d\n", TLB_SIZE) ;
                 printf("# of Page Faults: %d\n", page_fault_count) ;
                 printf("Page Fault Rate: %.3f\n", (double)page_fault_count/(double)k) ;
                 printf("# of TLB hits: %d\n", tlb_hit_count) ;
